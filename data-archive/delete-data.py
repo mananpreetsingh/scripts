@@ -13,7 +13,7 @@ connection = pymysql.connect(host='localhost',
                              charset='utf8',
                              cursorclass=pymysql.cursors.DictCursor)
 
-print("\nDatabase Connection is Successfull!!\n\n")
+print("\nConnected to Database!!\n\n")
 
 try:
     with connection.cursor() as cursor:
@@ -43,12 +43,12 @@ try:
 
 
 #Delete Data
-                input_confirm=input("Would you like to proceed in order to delete the data (yes/no)?")
+                input_confirm=input("Would you like to proceed in order to delete the data (yes/no)? :")
                 if input_confirm.lower() == "yes":
                     delete_data = "DELETE FROM tbl_sys_events WHERE id<={}".format(id_delete)
                     cursor.execute(delete_data)
                     connection.commit()
-                    print(("Deleted all rows until ID: "),(id_delete))
+                    print(("\n\nAll rows are deleted until ID: "),(id_delete))
                 else:
                     print("Well, You chose not to delete the data, but it already has been backed up for yor record.")
 

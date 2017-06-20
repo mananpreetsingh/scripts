@@ -1,8 +1,6 @@
 
 import pymysql.cursors
 
-
-
 # Connect to the database
 connection = pymysql.connect(host='localhost',
                              user='root',
@@ -11,7 +9,7 @@ connection = pymysql.connect(host='localhost',
                              charset='utf8',
                              cursorclass=pymysql.cursors.DictCursor)
 
-print("\nDatabase Connection is Successfull!!\n\n")
+print("\n Connected to Database!!\n\n")
 
 try:
     with connection.cursor() as cursor:
@@ -25,11 +23,12 @@ try:
                 cursor.execute(sql_insert, ("alayacare@python.org", "secret"))
                 connection.commit()
                 i=i+1
+            print((input_number), "\n\nRows are generated successfully.\n\n")
         except:
             print("\n\n Input value is wrong, Please enter an integer.\n\n")
 
 # Display all the records
-        print("Following are the current entries in the table :\n\n")
+        print("Reading data from table :\n\n")
         sql = "SELECT id, password FROM tbl_sys_events"
         cursor.execute(sql)
         for row in cursor:

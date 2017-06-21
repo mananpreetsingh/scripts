@@ -1,8 +1,9 @@
-import subprocess
-import time
-import pymysql.cursors
-import boto3
 import os
+import time
+import boto3
+import subprocess
+import pymysql.cursors
+from zipfile import ZipFile
 
 # Variables Declaration
 user='root'
@@ -13,8 +14,10 @@ encrypt_key = os.urandom(32)
 timestamp=time.strftime('%Y-%m-%d_%H:%M:%S')
 
 file_path ="dumps/"
-file_timestamp = "mysql_dump_{}.sql".format(timestamp)
+file_timestamp = "mysql_dump_{}".format(timestamp)
 file_name = file_path + file_timestamp
+sql_file_name = file_name + ".sql"
+zip_file_name = file_name + ".zip"
 print(file_name)
 
 
@@ -49,17 +52,20 @@ try:
 # Dump the mysql data
             else:
 #                mysqldump = "mysqldump -u {} -p{} --databases info --where 'id<={}' --no-create-info > dumps/mysql_dump_{}".format(user, password, id_delete, timestamp)
-                mysqldump = "mysqldump -u {} -p{} --databases info --where 'id<={}' --no-create-info > {}".format(user, password, id_delete, file_name)
+                mysqldump = "mysqldump -u {} -p{} --databases info --where 'id<={}' --no-create-info > {}".format(user, password, id_delete, sql_file_name)
                 subprocess.run([mysqldump], shell=True)
+                with ZipFile(zip_file_name, "w") as myzip:
+                    myzip.write("dumps" + "/" + file_timestamp + ".sql", arcname=file_timestamp +".sql")
+
                 print("Data has been backed up until id", id_delete, ", Please proceed to delete the data from server.\n\n")
 
 # Upload Data to AWS S3
 
                 s3 = boto3.client('s3')
-                data = open(file_name, "rb")
+                data = open(sql_file_name, "rb")
                 print(("Encryption key is"), encrypt_key)
                 s3.put_object(Bucket=bucket_name,
-                              Key=file_name,
+                              Key=sql_file_name,
                               Body=data,
                               #ServeyerSideEncryption='AES256',
                               SSECustomerKey=encrypt_key,
@@ -75,8 +81,6 @@ try:
                     print(("\n\nAll rows are deleted until ID: "),(id_delete))
                 else:
                     print("Well, You chose not to delete the data, but it already has been backed up for yor record.")
-
-
 
 
 finally:

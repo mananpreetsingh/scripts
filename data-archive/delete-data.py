@@ -18,7 +18,7 @@ file_timestamp = "mysql_dump_{}".format(timestamp)
 file_name = file_path + file_timestamp
 sql_file_name = file_name + ".sql"
 zip_file_name = file_name + ".zip"
-print(file_name)
+#print(file_name)
 
 
 # Database Connectivity
@@ -33,10 +33,10 @@ try:
     with connection.cursor() as cursor:
 
 # Dispaly all the records
+        print("Data that is present inside table:")
         sql = "SELECT id, password FROM tbl_sys_events"
         cursor.execute(sql)
         for row in cursor:
-            print("Data that is present inside table:")
             print(row)
 
 # Provides the maximum id from database:
@@ -54,26 +54,29 @@ try:
 #                mysqldump = "mysqldump -u {} -p{} --databases info --where 'id<={}' --no-create-info > dumps/mysql_dump_{}".format(user, password, id_delete, timestamp)
                 mysqldump = "mysqldump -u {} -p{} --databases info --where 'id<={}' --no-create-info > {}".format(user, password, id_delete, sql_file_name)
                 subprocess.run([mysqldump], shell=True)
+
+# Zip dump file
                 with ZipFile(zip_file_name, "w") as myzip:
                     myzip.write("dumps" + "/" + file_timestamp + ".sql", arcname=file_timestamp +".sql")
+                    ZipFile.close(myzip)
 
-                print("Data has been backed up until id", id_delete, ", Please proceed to delete the data from server.\n\n")
+                print("Data is backed up and zipped until id", id_delete, ", Please proceed to delete the data.\n\n")
 
 # Upload Data to AWS S3
 
                 s3 = boto3.client('s3')
-                data = open(sql_file_name, "rb")
-                print(("Encryption key is"), encrypt_key)
+                data = open(zip_file_name, "rb")
+#                print(("Encryption key is"), encrypt_key)
                 s3.put_object(Bucket=bucket_name,
-                              Key=sql_file_name,
+                              Key=zip_file_name,
                               Body=data,
                               #ServeyerSideEncryption='AES256',
                               SSECustomerKey=encrypt_key,
                               SSECustomerAlgorithm='AES256')
-                print("File uploaded to S3")
+                print("\n\n#############\nFile uploaded to S3\n#############")
 
 # Delete Data from tables
-                input_confirm=input("Would you like to proceed in order to delete the data (yes/no)? :")
+                input_confirm=input("Would you like to delete the data from tables (yes/no)? :")
                 if input_confirm.lower() == "yes":
                     delete_data = "DELETE FROM tbl_sys_events WHERE id<={}".format(id_delete)
                     cursor.execute(delete_data)
